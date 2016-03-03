@@ -21,6 +21,15 @@ public class Circle {
     double strokeSize;
 
 
+    /**
+     * Constructor for circle without stroke.
+     * @param centerX
+     * @param centerY
+     * @param height
+     * @param width
+     * @param color
+     * @param fillStrokeType
+     */
     public Circle(int centerX, int centerY,
                   int height, int width,
                   Color color,
@@ -34,6 +43,16 @@ public class Circle {
         this.strokeSize = 0;
     }
 
+    /**
+     * Constructor for circle with stroke
+     * @param centerX
+     * @param centerY
+     * @param height
+     * @param width
+     * @param color
+     * @param fillStrokeType
+     * @param strokeSize
+     */
     public Circle(int centerX, int centerY,
                   int height, int width,
                   Color color,

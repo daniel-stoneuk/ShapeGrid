@@ -1,6 +1,7 @@
 package com.danielstone.shapes;
 
 import javafx.application.Application;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -10,7 +11,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -49,6 +49,8 @@ public class Main extends Application{
     // Circle point size
     static final int circleWidth = 10;
     static final int circleHeight = 10;
+    // Circle Color
+    static final Color circleColor = Color.PALEVIOLETRED;
 
     /*
     End of Preferences
@@ -63,9 +65,14 @@ public class Main extends Application{
     Strings and layout values
      */
     private final String windowTitle = "Shape Grid";
+    private final String titleLabelString = "Draw Shapes!";
     private final int optionsGridPanePadding = 20;
+    private final String preferredFont = "Segoe UI";
+    private final int gridLabelFontSize = 10;
+    private final int smallLabelFontSize = 15;
+    private final int titleLabelFontSize = 30;
     /*
-    End of stringsand layout values
+    End of strings and layout values
      */
 
     /*
@@ -135,24 +142,25 @@ public class Main extends Application{
         //get graphics context from canvas
         gc = canvas.getGraphicsContext2D();
         //set graphics context font
-        gc.setFont(new Font("Segoe UI", 15));
+        gc.setFont(new Font(preferredFont, gridLabelFontSize));
 
         //initialize options (bottom) GridPane
         GridPane options = new GridPane();
         //set padding
         options.setPadding(new Insets(optionsGridPanePadding));
-        titleLabel = new Label("Draw Shapes!");
-        titleLabel.setFont(new Font("Segoe UI", 30));
+
+        //initialize the titleLabel with the text titleLabelString
+        titleLabel = new Label(titleLabelString);
+        titleLabel.setFont(new Font(preferredFont, titleLabelFontSize));
         options.add(titleLabel, 0, 0, 2, 1);
 
         numberOfPointsLabel = new Label("0 points");
-        numberOfPointsLabel.setFont(new Font("Segoe UI", 15));
+        numberOfPointsLabel.setFont(new Font(preferredFont, smallLabelFontSize));
         options.add(numberOfPointsLabel, 0, 1, 1, 1);
 
         resetButton = new Button("Reset");
-        resetButton.setFont(new Font("Segoe UI", 15));
-        resetButton.setOnAction(event -> {} /*TODO:
-        Add resetButtonClicked(event) method */);
+        resetButton.setFont(new Font(preferredFont, smallLabelFontSize));
+        resetButton.setOnAction(event -> resetButtonClicked(event));
         options.setMargin(resetButton, new Insets(0, 0, 0, 20));
         options.add(resetButton, 1, 1, 1, 1);
 
@@ -162,22 +170,59 @@ public class Main extends Application{
         window.setScene(new Scene(root, canvasX, 700));
         window.show();
 
-        Utility.drawGrid(this, gc);
+        Utility.drawGrid(canvasX, canvasY, gridSize, gridColor, gridLineWidth, gc);
         pointsArray = new ArrayList<>();
     }
 
     private void canvasClick(int x, int y) {
-        x = Utility.snapToGridPixels(this, x);
-        y = Utility.snapToGridPixels(this, y);
-        int check = Utility.checkIfCircleExists(this, x, y);
+        //Snap click point to grid
+        x = Utility.snapToGridPixels(gridSize, x);
+        y = Utility.snapToGridPixels(gridSize, y);
+        //Use utility checkIfCircleExists helper method to get index if it does exist.
+        int check = Utility.checkIfCircleExists(pointsArray, x, y);
         if (check == -1) {
-            //pointsArray.add(new com.danielstone.shapes.Circle(x, y, circleWidth, circleHeight,|));
+            //circle doesn't exist. Add to arrayList
+            pointsArray.add(new Circle(x, y, circleHeight, circleWidth, Color.ALICEBLUE, FILL));
         } else {
-            pointsArray.remove((int) check);
+            //circle exists. Remove from arrayList
+            pointsArray.remove(check);
         }
+        reRender();
     }
 
     private void reRender() {
+        gc.clearRect(0, 0, canvasX, canvasY);
+        Utility.drawGrid(canvasX, canvasY, gridSize, gridColor, gridLineWidth, gc);
 
+        gc.setFill(Color.AQUA);
+
+        if (pointsArray.size() >= 3) {
+            double[] xPoints = new double[pointsArray.size()];
+            double[] yPoints = new double[pointsArray.size()];
+            for (int i = 0; i < pointsArray.size(); i++) {
+                xPoints[i] = (double) pointsArray.get(i).centerX;
+                yPoints[i] = (double) pointsArray.get(i).centerY;
+            }
+            Utility.drawPolygonWithCoordPointsArray(gc, xPoints, yPoints, FILL, pointsArray.size(), null);
+        }
+
+        for (int i = 0; i < pointsArray.size(); i++) {
+            gc.setFill(circleColor);
+            Circle currentCircle = pointsArray.get(i);
+            gc.fillOval(currentCircle.centerX - currentCircle.width /2,
+                    currentCircle.centerY - currentCircle.height / 2,
+                    currentCircle.width,
+                    currentCircle.height);
+
+            gc.setFill(Color.BLACK);
+            gc.fillText(""+(i + 1), currentCircle.centerX + currentCircle.width / 2 + 4, currentCircle.centerY + currentCircle.height / 2 - 1);
+        }
+
+        numberOfPointsLabel.setText(pointsArray.size() + " points");
+    }
+
+    private void resetButtonClicked(ActionEvent event) {
+        pointsArray.clear();
+        reRender();
     }
 }
