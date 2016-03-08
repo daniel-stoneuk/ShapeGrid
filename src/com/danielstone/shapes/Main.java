@@ -56,7 +56,7 @@ public class Main extends Application{
     End of Preferences
      */
 
-    //int definitions (not as resource intensive as Enums)
+    //intdef(not as resource intensive as Enums)
     static final int FILL = 1;
     static final int FILL_WITH_STROKE = 2;
     static final int STROKE = 3;
@@ -65,8 +65,11 @@ public class Main extends Application{
     Strings and layout values
      */
     private final String windowTitle = "Shape Grid";
+    private final String editingString = "Editing";
+    private final String viewingString = "Viewing";
     private final String titleLabelString = "Draw Shapes!";
     private final int optionsGridPanePadding = 20;
+    private final int optionsGridPaneGap = 10;
     private final String preferredFont = "Segoe UI";
     private final int gridLabelFontSize = 10;
     private final int smallLabelFontSize = 15;
@@ -76,10 +79,18 @@ public class Main extends Application{
      */
 
     /*
+    Variables
+     */
+    private boolean editing = false;
+    /*
+    End of Variables
+     */
+
+    /*
     JavaFX elements
      */
-    Label titleLabel, numberOfPointsLabel;
-    Button resetButton;
+    Label titleLabel, numberOfPointsLabel, statusLabel;
+    Button resetButton, toggleStatusButton;
     /*
     End of JavaFX elements
      */
@@ -90,10 +101,12 @@ public class Main extends Application{
     EventHandler<MouseEvent> canvasOnMouseClickedHandler = new EventHandler<MouseEvent>() {
         @Override
         public void handle(MouseEvent event) {
-            int x = (int) event.getX();
-            int y = (int) event.getY();
+            if (editing) {
+                int x = (int) event.getX();
+                int y = (int) event.getY();
 
-            canvasClick(x, y);
+                canvasClick(x, y);
+            }
         }
     };
     /*
@@ -144,28 +157,51 @@ public class Main extends Application{
         //set graphics context font
         gc.setFont(new Font(preferredFont, gridLabelFontSize));
 
-        //initialize options (bottom) GridPane
-        GridPane options = new GridPane();
+        //initialize leftPanel (bottom) GridPane
+        GridPane leftPanel = new GridPane();
         //set padding
-        options.setPadding(new Insets(optionsGridPanePadding));
+        leftPanel.setPadding(new Insets(optionsGridPanePadding));
+        leftPanel.setVgap(optionsGridPaneGap);
+        leftPanel.setHgap(optionsGridPaneGap);
 
         //initialize the titleLabel with the text titleLabelString
         titleLabel = new Label(titleLabelString);
         titleLabel.setFont(new Font(preferredFont, titleLabelFontSize));
-        options.add(titleLabel, 0, 0, 2, 1);
+        leftPanel.add(titleLabel, 0, 0, 2, 1);
+
+        statusLabel = new Label("Status: " + viewingString);
+        statusLabel.setFont(new Font(preferredFont, smallLabelFontSize));
+        leftPanel.add(statusLabel, 0, 1);
+
+        toggleStatusButton = new Button("Add Shape");
+        toggleStatusButton.setFont(new Font(preferredFont, smallLabelFontSize));
+        toggleStatusButton.setOnAction(event1 -> {addShapeButtonClicked(event1, toggleStatusButton);});
+        leftPanel.add(toggleStatusButton, 1, 1);
 
         numberOfPointsLabel = new Label("0 points");
         numberOfPointsLabel.setFont(new Font(preferredFont, smallLabelFontSize));
-        options.add(numberOfPointsLabel, 0, 1, 1, 1);
+        leftPanel.add(numberOfPointsLabel, 0, 2, 1, 1);
 
         resetButton = new Button("Reset");
         resetButton.setFont(new Font(preferredFont, smallLabelFontSize));
-        resetButton.setOnAction(event -> resetButtonClicked(event));
-        options.setMargin(resetButton, new Insets(0, 0, 0, 20));
-        options.add(resetButton, 1, 1, 1, 1);
+        resetButton.setOnAction(event -> {if(editing) resetButtonClicked(event);});
+        leftPanel.add(resetButton, 1, 2, 1, 1);
 
-        root.add(canvas, 0, 0);
-        root.add(options, 0, 1);
+        //initialize rightPanel (bottom) GridPane
+        GridPane rightPanel = new GridPane();
+        //set padding
+        rightPanel.setPadding(new Insets(optionsGridPanePadding));
+        rightPanel.setVgap(optionsGridPaneGap);
+        rightPanel.setHgap(optionsGridPaneGap);
+
+
+
+        leftPanel.setGridLinesVisible(true);
+        rightPanel.setGridLinesVisible(true);
+
+        root.add(canvas, 0, 0, 2, 1);
+        root.add(leftPanel, 0, 1);
+        root.add(rightPanel, 1, 1);
 
         window.setScene(new Scene(root, canvasX, 700));
         window.show();
@@ -219,6 +255,18 @@ public class Main extends Application{
         }
 
         numberOfPointsLabel.setText(pointsArray.size() + " points");
+    }
+
+    private void addShapeButtonClicked(ActionEvent event, Button toggleStatusButton) {
+        if (editing) {
+            statusLabel.setText("Status: "+viewingString);
+            toggleStatusButton.setText("Add Shape");
+            editing = false;
+        } else {
+            statusLabel.setText("Status: "+editingString);
+            toggleStatusButton.setText("Stop");
+            editing = true;
+        }
     }
 
     private void resetButtonClicked(ActionEvent event) {
