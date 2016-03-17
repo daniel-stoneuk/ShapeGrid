@@ -1,5 +1,6 @@
 package com.danielstone.shapes;
 
+import com.sun.istack.internal.Nullable;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -13,9 +14,20 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * {@link Main} is the underlying class that displays
@@ -90,7 +102,7 @@ public class Main extends Application{
     JavaFX elements
      */
     Label titleLabel, numberOfPointsLabel, statusLabel;
-    Button resetButton, toggleStatusButton;
+    Button resetButton, toggleStatusButton, openFileButton;
     /*
     End of JavaFX elements
      */
@@ -187,13 +199,20 @@ public class Main extends Application{
         resetButton.setOnAction(event -> {if(editing) resetButtonClicked(event);});
         leftPanel.add(resetButton, 1, 2, 1, 1);
 
+
+
         //initialize rightPanel (bottom) GridPane
         GridPane rightPanel = new GridPane();
+
         //set padding
         rightPanel.setPadding(new Insets(optionsGridPanePadding));
         rightPanel.setVgap(optionsGridPaneGap);
         rightPanel.setHgap(optionsGridPaneGap);
 
+        openFileButton = new Button("Save to file");
+        openFileButton.setFont(new Font(preferredFont, smallLabelFontSize));
+        openFileButton.setOnAction(event -> openFileButtonClicked(event));
+        rightPanel.add(openFileButton, 1, 2, 1, 1);
 
 
         leftPanel.setGridLinesVisible(true);
@@ -210,6 +229,52 @@ public class Main extends Application{
         pointsArray = new ArrayList<>();
     }
 
+    private void openFileButtonClicked(ActionEvent actionEvent) {
+        FileChooser fileChooser = new FileChooser();
+
+
+        fileChooser.setTitle("Save file");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("shapes", "*.shapes")
+        );
+
+        File f = fileChooser.showSaveDialog(window);
+
+        if (f.exists()) {
+            try {
+                System.out.println("file created");
+                writeFile(f);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+
+
+    }
+
+    private void writeFile(File f){
+        String header = "com.danielstone.shapes";
+        ArrayList<String> lines = new ArrayList<>();
+        for (int i = 0; i < pointsArray.size(); i++) {
+            try {
+                lines.add(pointsArray.get(i).generateSaveLine(i));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        Path file = f.toPath();
+        try {
+            Files.write(file, lines, Charset.forName("UTF-8"));
+//            Files.write(file, lines, Charset.forName("UTF-8"), StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+    public void readFile(){}
+
+
     private void canvasClick(int x, int y) {
         //Snap click point to grid
         x = Utility.snapToGridPixels(gridSize, x);
@@ -225,6 +290,8 @@ public class Main extends Application{
         }
         reRender();
     }
+
+
 
     private void reRender() {
         gc.clearRect(0, 0, canvasX, canvasY);
@@ -262,6 +329,7 @@ public class Main extends Application{
             statusLabel.setText("Status: "+viewingString);
             toggleStatusButton.setText("Add Shape");
             editing = false;
+
         } else {
             statusLabel.setText("Status: "+editingString);
             toggleStatusButton.setText("Stop");
@@ -269,7 +337,7 @@ public class Main extends Application{
         }
     }
 
-    private void resetButtonClicked(ActionEvent event) {
+    private void resetButtonClicked(@Nullable ActionEvent event) {
         pointsArray.clear();
         reRender();
     }
