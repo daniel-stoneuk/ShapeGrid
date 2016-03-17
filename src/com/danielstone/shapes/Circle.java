@@ -2,6 +2,7 @@ package com.danielstone.shapes;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import org.json.JSONObject;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -29,9 +30,7 @@ public class Circle {
     double strokeSize;
 
     public Circle(String jsonInfo) throws FileNotFoundException {
-        JsonReader reader = Json.createReader(new FileReader("jsondata.txt"));
-        JsonStructure jsonst = reader.read();
-
+        JSONObject jsonObject = new JSONObject(jsonInfo);
     }
 
 
